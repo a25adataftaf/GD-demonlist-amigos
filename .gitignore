@@ -1,0 +1,7 @@
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Nada de lo que genera el proyecto se ignora: index.html, datos-niveles.json
+# y el CSV se versionan a propósito para que el repo se pueda abrir/desplegar
+# tal cual sin ejecutar nada.

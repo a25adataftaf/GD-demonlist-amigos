@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Demonlist del grupo — réplica de Pointercrate</title>
+<style>
+/* ===================== Base (estilo Pointercrate) ===================== */
+:root{
+  --color-text:#444446; --color-text-accent:#222; --color-border:lightgray; --color-bg:#fff;
+  --color-ok-bg:#eeffe4; --color-ok-border:#a8ff93; --color-ok-text:#074d07; --color-ok-accent:#68bf0b;
+  --color-pc-button-bg:#0881c6; --color-pc-button-bg-hover:#076696; --color-pc-button-bg-click:#055075;
+  --color-warn-bg:#fffadd; --color-warn-text:#4d4707;
+  --color-error-bg:#fdd; --color-error-text:#4d0707;
+  --panel-shadow:0 0 20px 0 rgba(0,0,0,.10);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; color:var(--color-text); background:var(--color-bg);
+  font-family:"Montserrat","Segoe UI",Roboto,-apple-system,Arial,sans-serif; font-size:15px;
+  display:flex; flex-direction:column;
+}
+a{color:var(--color-text-accent); text-decoration:none; cursor:pointer}
+a:hover{text-decoration:underline}
+h1,h2,h3,h4{text-align:center; margin:.5em 0}
+h2{font-size:1.5em} h3{font-size:1.1em; font-weight:600}
+ul{padding:0; margin:0; list-style:none}
+.ta-left{text-align:left !important}
+.center{max-width:1072px; margin-left:auto; margin-right:auto}
+.small{font-size:.8em}
+.dim{color:#888}
+.flex{display:flex; justify-content:flex-start; position:relative; max-width:100%; flex-flow:row nowrap}
+.flex.wrap{flex-wrap:wrap}
+.flex.cen{justify-content:center; align-items:center}
+.flex.space{justify-content:space-between}
+.panel{padding:20px; margin:26px 10px; background:var(--color-bg); position:relative; text-align:center}
+.fade{box-shadow:var(--panel-shadow); border:1px lightgray dashed}
+.content{flex:1 0 auto}
+footer{flex-shrink:0; padding:18px; text-align:center; color:#888; font-size:.85em; border-top:1px solid #eee; background:#fafafa}
+/* ===================== Botones ===================== */
+.button{padding:10px 20px; text-align:center; border:none; cursor:pointer; display:inline-flex; justify-content:center;
+  align-items:center; font-family:inherit; font-size:1em; font-weight:600}
+.button.pc{background:var(--color-pc-button-bg); color:#fff}
+.button.pc:hover{background:var(--color-pc-button-bg-hover)}
+.button.pc:active{background:var(--color-pc-button-bg-click)}
+.button.unob{background:var(--color-bg); color:var(--color-text); border:1px solid var(--color-border)}
+.button.unob:hover{background:#ddd}
+.button.danger{background:#ff003c; color:#fff}
+.button.sm{padding:6px 12px; font-size:.85em}
+.button[disabled]{opacity:.45; cursor:not-allowed}
+/* ===================== Barra de navegación ===================== */
+header nav{
+  width:100%; min-height:70px; display:flex; flex-flow:row wrap; position:fixed; top:0; left:0; z-index:999;
+  background:rgba(255,255,255,.97); box-shadow:0 2px 10px rgba(0,0,0,.08);
+  font-size:1.05em; font-weight:600; align-items:stretch;
+}
+header nav + *{padding-top:70px}
+.content{padding-top:70px}
+header nav .nav-icon{font-size:140%; padding:5px 20px; display:flex; align-items:center; text-decoration:none}
+header nav .nav-item{display:flex; align-items:center; padding:5px 18px; cursor:pointer; position:relative; white-space:nowrap}
+header nav .nav-item:hover{background:#f3f6fb}
+header nav .nav-item.on{box-shadow:inset 0 -4px 0 var(--color-pc-button-bg)}
+header nav .nav-right{margin-left:auto; font-size:.8em; font-weight:600; color:#666}
+@media(max-width:767px){
+  header nav{font-size:.9em; flex-wrap:nowrap; overflow-x:auto; min-height:56px; align-items:center}
+  header nav .nav-item{padding:5px 12px; height:56px}
+  header nav .nav-icon{padding:5px 10px; white-space:nowrap}
+  header nav .nav-item.on{box-shadow:inset 0 -3px 0 var(--color-pc-button-bg)}
+  #liderChip{display:none}
+  #btnMasFiltros{display:inline-flex}
+  #filtrosAvz{display:none}
+  #filtrosAvz.open{display:flex}
+  .content{padding-top:56px}
+  #marcador{padding:10px 12px}
+  #marcador h2{font-size:1.15em}
+  #marcadorJugadores{width:100%; overflow-x:auto; justify-content:flex-start; flex-wrap:nowrap; margin:6px 0}
+  #marcador .jug{padding:2px 10px; min-width:80px}
+  #marcador .jug .nm{font-size:.85em; white-space:nowrap}
+  #marcador .jug .pz{font-size:.95em}
+  #marcador .jug .sub{display:none}
+  #marcador > .flex.space{gap:6px}
+  .pod{padding:10px}
+  .panel{padding:14px; margin:16px 6px}
+  .lvl{padding:14px}
+}
+/* ===================== Paneles de nivel (como Pointercrate) ===================== */
+.lvl{padding:20px; margin:14px 10px; overflow:hidden; text-align:left; transition:background .35s, box-shadow .35s}
+.lvl.marked{background:var(--color-ok-bg); box-shadow:0 0 20px 0 rgba(104,191,11,.35)}
+.lvl.allcked{background:#dcffcd}
+.thumb{
+  display:block; position:relative; border:0; overflow:hidden; text-decoration:none;
+  max-width:30%; min-width:30%; aspect-ratio:16/9; flex:0 0 30%;
+  background:linear-gradient(135deg,#2b3a55,#101725 55%,#3b2b52);
+}
+.thumb:hover{text-decoration:none}
+.thumb-img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity .35s}
+.thumb-img.ok{opacity:1}
+.thumb-ph{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:4px; color:#fff; text-align:center; padding:10px; transition:opacity .35s}
+.thumb-img.ok ~ .thumb-ph{opacity:0}
+.thumb-ph .nm{font-weight:700; font-size:.95em; text-shadow:0 2px 8px rgba(0,0,0,.8)}
+.thumb-ph .pl{font-size:.75em; opacity:.85}
+.thumb.novid{background:linear-gradient(135deg,#5b3a3a,#241014)}
+.demon-info{align-items:center; width:100%}
+.demon-byline{padding-left:15px; width:100%}
+.demon-byline h2{margin-bottom:0}
+.demon-byline h3{margin:.25em 0 0; font-weight:500}
+.ptsline{font-size:.82em; margin-top:4px; color:#555}
+.tags{margin-top:6px; display:flex; gap:4px; flex-wrap:wrap}
+.tag{font-size:.7em; border:1px solid #ddd; border-radius:3px; padding:1px 6px; color:#666; background:#fafafa}
+.tag.pc{background:var(--color-pc-button-bg); color:#fff; border-color:transparent}
+.tag.ar{background:#6d28d9; color:#fff; border-color:transparent}
+.tag.lg{background:var(--color-error-bg); color:var(--color-error-text); border-color:#ff9393}
+.tag.p2{background:#e0f2fe; color:#075985; border-color:#bae6fd}
+.markers{margin-top:10px; padding-top:9px; border-top:1px dotted #ccc; display:flex; align-items:center; gap:7px; flex-wrap:wrap}
+.markers .lbl{font-size:.72em; text-transform:uppercase; letter-spacing:.06em; color:#888; font-weight:700}
+.pbtn{
+  font-family:inherit; font-size:.85em; font-weight:700; padding:6px 11px; cursor:pointer;
+  background:#fff; border:2px solid #e3e6ea; color:#555; border-radius:3px; transition:.12s; min-width:38px
+}
+.pbtn:hover{border-color:#bbb}
+.pbtn.on{color:#fff; border-color:transparent; box-shadow:0 2px 6px rgba(0,0,0,.18)}
+.lvl .who{font-size:.78em; color:var(--color-ok-text); background:rgba(104,191,11,.18); border-radius:3px; padding:2px 7px}
+@media(max-width:767px){
+  .lvl{flex-direction:column}
+  .thumb{width:100%; max-width:100%; min-width:100%; flex:0 0 auto}
+  .demon-byline{padding-left:0; margin-top:10px}
+}
+/* ===================== Tablas (estilo Pointercrate) ===================== */
+table{width:100%; border-collapse:collapse}
+th{background:var(--color-pc-button-bg); color:#fff; height:2.6em; padding:6px; font-size:.8em; text-transform:uppercase; letter-spacing:.05em}
+td{padding:8px 10px; border-bottom:1px solid #eef}
+tr{background:#fefeff}
+tr:nth-child(even){background:#e6eeff}
+.rk{font-weight:800; width:56px}
+.rk.r1{color:#c99700} .rk.r2{color:#7b8794} .rk.r3{color:#a2561e}
+.bar{height:8px; background:#e6eef7; border-radius:999px; overflow:hidden; min-width:80px}
+.bar>i{display:block; height:100%; background:linear-gradient(90deg,#0881c6,#68bf0b)}
+/* ===================== Formularios ===================== */
+input,select,textarea{font-family:inherit; font-size:.95em; padding:8px 10px; border:1px solid #ccc; background:#fff; color:var(--color-text); border-radius:3px}
+input:focus,select:focus,textarea:focus{outline:2px solid #bcd7ea; border-color:#0881c6}
+label.lbl{font-size:.72em; text-transform:uppercase; letter-spacing:.06em; color:#888; font-weight:700; display:block; margin-bottom:4px}
+.row{display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end}
+.row.mid{align-items:center}
+.spacer{flex:1}
+.chip{font-family:inherit; font-size:.82em; font-weight:600; padding:6px 12px; border:1px solid #ddd; background:#fff; color:#666; cursor:pointer; border-radius:3px}
+.chip:hover{border-color:#bbb}
+.chip.on{background:var(--color-pc-button-bg); color:#fff; border-color:transparent}
+/* ===================== Listas del menu superior (#lists) ===================== */
+#lists{gap:0; margin-bottom:6px}
+#lists .button{font-size:.9em; flex-grow:1}
+#lists .button.on{background:var(--color-pc-button-bg-click); color:#fff}
+#lists .button.off{background:#f4f6f9; color:#555; border:1px solid #e3e6ea}
+/* ===================== Marcador ===================== */
+#marcador{position:sticky; top:70px; z-index:900; margin:26px 10px 6px; padding:12px 16px; text-align:left}
+@media(max-width:767px){ #marcador{position:static; margin:14px 6px 6px} }
+#marcador .jug{display:flex; flex-direction:column; align-items:center; gap:2px; padding:4px 14px; cursor:pointer; border-left:1px solid #eef}
+#marcador .jug:first-child{border-left:none}
+#marcador .jug .nm{font-weight:700}
+#marcador .jug .pz{font-weight:800; color:#0881c6}
+#marcador .jug .sub{font-size:.72em; color:#888}
+#marcador .jug.lead{background:linear-gradient(180deg,#fffbe8,#fff)}
+.podio{display:flex; gap:10px; justify-content:center; flex-wrap:wrap}
+.pod{flex:1 1 200px; max-width:280px; border:1px solid #e3e6ea; padding:12px; background:#fafcff}
+.pod.lead{border-color:#ffd257; background:linear-gradient(180deg,#fffbe8,#fff)}
+.pod .nm{font-weight:800; font-size:1.05em}
+.pod .pz{font-size:1.6em; font-weight:800; color:#0881c6}
+/* ===================== Varios ===================== */
+#toast{position:fixed; left:50%; bottom:24px; transform:translateX(-50%) translateY(160%); background:#222; color:#fff;
+  padding:12px 20px; font-weight:600; z-index:1200; transition:.3s; max-width:92vw; text-align:center; border-radius:3px;
+  visibility:hidden; opacity:0; pointer-events:none}
+#toast.on{transform:translateX(-50%) translateY(0); visibility:visible; opacity:1}
+#modal{position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; padding:18px; z-index:1100}
+#modal.on{display:flex}
+#modal .box{background:#fff; border:1px solid lightgray; box-shadow:var(--panel-shadow); max-width:720px; width:100%; max-height:86vh; overflow:auto; padding:20px}
+.list{max-height:420px; overflow:auto; border:1px solid #eee}
+.hint{font-size:.82em; color:#888}
+.warnp{background:var(--color-warn-bg); color:var(--color-warn-text); border:1px solid #e0e37b; padding:10px 12px; font-size:.88em}
+.view{display:none}
+.view.on{display:block}
+#vermas{text-align:center; margin:18px 0 40px}
+#btnMasFiltros{display:none}
+.kpi{font-size:1.7em; font-weight:800; color:#0881c6}
+</style>
+</head>
+<body>
+<header>
+  <nav>
+    <a class="nav-icon" data-view="demonlist" title="Demonlist del grupo">💠 <b>Demonlist</b><span class="dim" style="font-weight:400">·grupo</span></a>
+    <div class="nav-item on" data-view="demonlist">Demonlist</div>
+    <div class="nav-item" data-view="ranking">Clasificación</div>
+    <div class="nav-item" data-view="jugadores">Jugadores</div>
+    <div class="nav-item" data-view="reglas">Reglas</div>
+    <div class="nav-item nav-right" id="liderChip"></div>
+  </nav>
+</header>
+
+<div class="content">
+<main class="center">
+
+  <!-- ============ MARCADOR ============ -->
+  <section class="panel fade" id="marcador">
+    <div class="flex space mid wrap">
+      <div>
+        <h2 class="ta-left" style="margin:0">🏆 Marcador del grupo</h2>
+        <div class="hint ta-left" id="resumenLista"></div>
+      </div>
+      <div class="flex wrap" id="marcadorJugadores"></div>
+      <div class="flex wrap" style="gap:6px">
+        <button class="button pc sm" id="btnCopiarRanking">📋 Copiar ranking</button>
+        <button class="button unob sm" id="btnReset">♻️ Reiniciar</button>
+      </div>
+    </div>
+    <div class="warnp" id="avisoGuardado" style="display:none;margin-top:10px;text-align:left"></div>
+  </section>
+
+  <!-- ============ DEMONLIST ============ -->
+  <section class="view on" id="v-demonlist">
+    <nav class="flex wrap" id="lists">
+      <button class="button pc on" data-lista="pc">Pointercrate Demonlist</button>
+      <button class="button off" data-lista="aredl">AREDL completa</button>
+      <button class="button off" data-lista="restantes">Lo que nos falta</button>
+      <button class="button off" data-lista="pasados">Lo que hemos pasado</button>
+    </nav>
+
+    <section class="panel fade" style="margin-top:8px; text-align:left">
+      <div class="row mid">
+        <div style="flex:1;min-width:200px">
+          <label class="lbl">Buscar nivel</label>
+          <input id="q" placeholder="Nombre o ID del nivel…" style="width:100%">
+        </div>
+        <button class="button unob sm" id="btnMasFiltros" type="button">⚙️ Filtros</button>
+      </div>
+      <div class="row mid" id="filtrosAvz" style="margin-top:12px">
+        <div>
+          <label class="lbl">Ordenar por</label>
+          <select id="orden">
+            <option value="pc">Posición Pointercrate</option>
+            <option value="pos">Posición AREDL</option>
+            <option value="pts">Puntos</option>
+            <option value="nombre">Nombre (A-Z)</option>
+            <option value="gddl">Tier GDDL</option>
+            <option value="edel">Disfrute (EDEL)</option>
+          </select>
+        </div>
+        <div>
+          <label class="lbl">Ver niveles</label>
+          <select id="fVista">
+            <option value="todos">Todos</option>
+            <option value="conVideo">Con vídeo en Pointercrate</option>
+            <option value="top150">Top 150</option>
+            <option value="legacy">Legacy (0 pts)</option>
+            <option value="2p">2 jugadores</option>
+            <option value="soloAredl">Solo AREDL (sin ficha en PC)</option>
+          </select>
+        </div>
+        <div>
+          <label class="lbl">Sobre un jugador</label>
+          <select id="fJugador"></select>
+        </div>
+        <div>
+          <label class="lbl">Etiqueta</label>
+          <select id="fTag"><option value="">Todas</option></select>
+        </div>
+      </div>
+      <div class="row mid" style="margin-top:12px">
+        <div class="flex wrap" id="chipsPend"></div>
+        <div class="spacer"></div>
+        <button class="button unob sm" id="btnLimpiar">✖ Limpiar filtros</button>
+      </div>
+      <div class="hint" id="contador" style="margin-top:10px"></div>
+    </section>
+
+    <div id="nivelesBox"></div>
+    <div id="vermas"></div>
+  </section>
+
+  <!-- ============ CLASIFICACIÓN ============ -->
+  <section class="view" id="v-ranking">
+    <section class="panel fade">
+      <h2>🥇 Clasificación del grupo</h2>
+      <div class="podio" id="podio"></div>
+    </section>
+    <section class="panel fade" style="overflow:auto;text-align:left">
+      <table id="tablaRanking"></table>
+    </section>
+    <section class="panel fade">
+      <h2>📊 Estadísticas del grupo</h2>
+      <div class="flex wrap cen" id="statsGrupo" style="gap:18px"></div>
+    </section>
+    <section class="panel fade">
+      <h2>🎭 Piques</h2>
+      <div class="grid" id="piques" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center"></div>
+    </section>
+  </section>
+
+  <!-- ============ JUGADORES ============ -->
+  <section class="view" id="v-jugadores">
+    <section class="panel fade" style="text-align:left">
+      <h2>👥 Jugadores</h2>
+      <p class="hint">Haz clic en un nombre para editarlo. Los botones de color de cada nivel llevan vuestras iniciales.</p>
+      <div class="flex wrap" id="listaJugadores" style="gap:10px;justify-content:center"></div>
+      <div class="row mid" style="margin-top:14px">
+        <input id="nuevoJugador" placeholder="Nombre del nuevo jugador…" maxlength="18">
+        <button class="button pc sm" id="btnAddJugador">➕ Añadir jugador</button>
+      </div>
+    </section>
+    <section class="panel fade" style="text-align:left">
+      <h2>💾 Guardar y compartir</h2>
+      <p class="hint">El progreso se guarda solo en este navegador. Para jugar entre varios: exporta, pasa el texto por WhatsApp y que el otro lo importe (o fusione).</p>
+      <div class="row mid">
+        <button class="button pc sm" id="btnExportar">⬇️ Exportar progreso</button>
+        <button class="button unob sm" id="btnImportar">⬆️ Importar progreso</button>
+        <button class="button unob sm" id="btnCopiarRanking2">📋 Copiar ranking</button>
+        <button class="button danger sm" id="btnReset2">♻️ Reiniciar todo</button>
+      </div>
+    </section>
+    <section class="panel fade" style="text-align:left">
+      <h2>🔄 Actualizar datos</h2>
+      <p class="hint">Vuelve a descargar la lista de AREDL y de Pointercrate. Necesita internet (en la vista previa no hay red).</p>
+      <div class="row mid">
+        <button class="button unob sm" id="btnActualizar">⬇️ Descargar de nuevo</button>
+        <span class="hint" id="estadoAct">Datos del <b id="fechaDatos"></b></span>
+      </div>
+    </section>
+  </section>
+
+  <!-- ============ REGLAS ============ -->
+  <section class="view" id="v-reglas">
+    <section class="panel fade" style="text-align:left">
+      <h2 class="ta-left">📖 Cómo funciona esta página</h2>
+      <p>Es una <b>réplica de la Demonlist de Pointercrate</b> (<a href="https://pointercrate.com/demonlist/" target="_blank" rel="noopener">pointercrate.com/demonlist</a>),
+      pero con el marcador de nuestro grupo encima: cada panel muestra el nivel tal y como aparece allí
+      (miniatura del vídeo, verificador, publisher y el % que hace falta para el récord parcial) y debajo, los botones para marcarlo.</p>
+      <h3 class="ta-left">✅ Qué cuenta como «pasado»</h3>
+      <ul style="list-style:disc; padding-left:22px">
+        <li>En la <b>AREDL</b>, un récord cuenta solo con el <b>100%</b> del nivel.</li>
+        <li>En <b>Pointercrate</b>, los niveles del top 75 también admiten récords parciales desde el porcentaje indicado
+            (<span class="small dim">p. ej. «récord parcial desde 66%»</span>). Aquí, para simplificar, marcamos niveles completados al 100%:
+            si alguno tiene un récord parcial que os queráis apuntar, lo hablamos y lo añadimos.</li>
+      </ul>
+      <h3 class="ta-left">🎯 Puntuación</h3>
+      <p>Cada nivel vale los <b>puntos oficiales de la AREDL</b> (no son lineales: el <b>#1</b> es <span id="rTop"></span> y el último puntuado,
+         <span id="rMin"></span>). En total hay <b><span id="rTot"></span></b> puntos repartidos entre <span id="rPun"></span> niveles.</p>
+      <ul style="list-style:disc; padding-left:22px">
+        <li><span class="tag ar">AREDL</span> nivel puntuado (de 10 a 5.000 puntos).</li>
+        <li><span class="tag lg">LEGACY</span> retirado de la lista → 0 puntos, pero se puede marcar igual.</li>
+        <li><span class="tag pc">PC</span> está en Pointercrate; el número es su puesto allí.</li>
+        <li><span class="tag p2">2P</span> niveles para dos jugadores.</li>
+      </ul>
+      <h3 class="ta-left">ℹ️ De dónde salen los datos</h3>
+      <ul style="list-style:disc; padding-left:22px">
+        <li>Posiciones y puntos: <a href="https://api.aredl.net/v2/docs" target="_blank" rel="noopener">API de la AREDL</a> (1.679 niveles).</li>
+        <li>Miniaturas, verificador, publisher y % requerido: <a href="https://pointercrate.com/api/v2/demons/listed/" target="_blank" rel="noopener">API de Pointercrate</a>.</li>
+        <li>Datos descargados el <b id="fechaDatos2"></b>. Las posiciones cambian con cada actualización de las listas:
+            las marcas se guardan por ID del nivel, así que no se pierde nada, pero los puntos de cada nivel pueden variar.</li>
+      </ul>
+      <div class="warnp">⚠️ Réplica hecha por y para el grupo, sin relación con Pointercrate ni con la AREDL. Los puntos que se muestran se calculan con los datos públicos de la AREDL.</div>
+    </section>
+  </section>
+
+</main>
+</div>
+
+<footer>
+  Réplica de la Demonlist de Pointercrate para uso privado del grupo · datos de AREDL y Pointercrate · <span id="fechaFooter"></span>
+</footer>
+
+<div id="modal"><div class="box" id="modalBox"></div></div>
+<div id="toast"></div>
+
+<script>
+/* =================== DATOS =================== */
+const DATOS = /*__DATOS__*/null;
+
+/* =================== ESTADO =================== */
+const LS = 'gd_ranking_pc_v1';
+const PALETA = ['#0881c6','#c2185b','#2e7d32','#ef6c00','#6a1b9a','#00838f','#ad1457','#4e342e','#827717','#283593','#d84315','#00695c'];
+
+let niveles = [], idxNivel = new Map(), estado = cargar();
+
+function estadoInicial(){
+  return {
+    jugadores:[1,2,3,4,5].map(n=>({id:'p'+n, nombre:'Jugador '+n, color:PALETA[(n-1)%PALETA.length]})),
+    marcas:{},
+    ui:{vista:'demonlist', lista:'pc', q:'', orden:'pc', fVista:'todos', fJugador:'', fTag:'', pend:'',
+        cargados:50, rankingFiltro:''}
+  };
+}
+function cargar(){
+  try{
+    const raw = localStorage.getItem(LS);
+    if(raw){ const d = estadoInicial(); const e = JSON.parse(raw); return Object.assign(d, e, {ui:Object.assign(d.ui, e.ui||{})}); }
+  }catch(e){}
+  return estadoInicial();
+}
+function guardar(){ try{ localStorage.setItem(LS, JSON.stringify(estado)); }catch(e){} }
+
+/* =================== NIVELES =================== */
+function construirNiveles(arr){
+  niveles = arr.map(n=>({
+    id:n[0], nombre:n[1], pos:n[2], pts:n[3], esMain:n[4]===1, dosJug:n[5]===1,
+    pc:n[6], req:n[7], gddl:n[8], edel:n[9], tags:n[10]||[], soloPc:n[11]===1, gdId:n[12],
+    video:n[13]||'', verifier:n[14]||'', publisher:n[15]||'', pcId:n[16]||0
+  }));
+  idxNivel = new Map(niveles.map(n=>[n.id,n]));
+  const tags = [...new Set(niveles.flatMap(n=>n.tags))].sort((a,b)=>a.localeCompare(b,'es'));
+  const sel = document.getElementById('fTag');
+  if(sel) sel.innerHTML = '<option value="">Todas</option>' + tags.map(t=>`<option>${esc(t)}</option>`).join('');
+}
+const norm = s => (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+const esc = s => (s||'').toString().replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = n => (n||0).toLocaleString('es-ES');
+const jugador = id => estado.jugadores.find(j=>j.id===id);
+const corte = nombre => { const p=String(nombre||'?').trim().split(/\s+/); return p.length>1 ? (p[0][0]+p[1][0]).toUpperCase() : (nombre.length<=4?nombre:nombre.slice(0,3)); };
+
+let porJugador = {}, marcaNivel = {};
+function reindexar(){
+  porJugador = {}; marcaNivel = {};
+  estado.jugadores.forEach(j=>porJugador[j.id]=[]);
+  for(const n of niveles){
+    const ps = estado.marcas[n.id] || [];
+    marcaNivel[n.id] = ps;
+    for(const pid of ps) if(porJugador[pid]) porJugador[pid].push(n);
+  }
+}
+function stats(j){
+  const hechos = porJugador[j.id]||[];
+  const puntuados = hechos.filter(n=>n.pts>0);
+  const puntos = puntuados.reduce((s,n)=>s+n.pts,0);
+  const conPos = puntuados.filter(n=>n.pos>0);
+  const masDificil = conPos.length ? conPos.reduce((a,b)=>a.pos<b.pos?a:b) : null;
+  return {puntos, total:hechos.length, puntuados:puntuados.length, masDificil,
+    media: conPos.length ? conPos.reduce((s,n)=>s+n.pos,0)/conPos.length : 0};
+}
+function ranking(){
+  return estado.jugadores.map(j=>Object.assign({j},stats(j)))
+    .sort((a,b)=> b.puntos-a.puntos || b.puntuados-a.puntuados ||
+      ((a.masDificil?a.masDificil.pos:1e9)-(b.masDificil?b.masDificil.pos:1e9)) || a.j.nombre.localeCompare(b.j.nombre,'es'));
+}
+
+/* =================== LISTAS / FILTROS =================== */
+function listaFiltrada(){
+  const u = estado.ui, q = norm(u.q);
+  let arr = niveles.slice();
+  if(u.lista==='pc')        arr = arr.filter(n=>n.pc>0);
+  else if(u.lista==='aredl') arr = arr.filter(n=>!n.soloPc);
+  else if(u.lista==='restantes'){
+    arr = arr.filter(n=>n.pts>0 && !estado.jugadores.every(j=>(marcaNivel[n.id]||[]).includes(j.id)));
+    if(estado.jugadores.length===1) arr = arr.filter(n=>!(marcaNivel[n.id]||[]).length);
+  }
+  else if(u.lista==='pasados') arr = arr.filter(n=>(marcaNivel[n.id]||[]).length>0);
+  if(u.fVista==='conVideo') arr = arr.filter(n=>n.video);
+  if(u.fVista==='top150')   arr = arr.filter(n=>n.pc>0 && n.pc<=150);
+  if(u.fVista==='legacy')   arr = arr.filter(n=>!n.esMain && !n.soloPc);
+  if(u.fVista==='2p')       arr = arr.filter(n=>n.dosJug);
+  if(u.fVista==='soloAredl')arr = arr.filter(n=>!n.pc);
+  if(u.fTag) arr = arr.filter(n=>n.tags.includes(u.fTag));
+  if(u.pend && u.fJugador){
+    if(u.pend==='pendientes') arr = arr.filter(n=>!(marcaNivel[n.id]||[]).includes(u.fJugador));
+    if(u.pend==='pasados')    arr = arr.filter(n=>(marcaNivel[n.id]||[]).includes(u.fJugador));
+  }
+  if(q) arr = arr.filter(n=>norm(n.nombre).includes(q)||String(n.gdId).includes(q));
+  const ord = u.orden;
+  arr.sort((a,b)=>{
+    if(ord==='nombre') return a.nombre.localeCompare(b.nombre,'es');
+    if(ord==='pts')    return b.pts-a.pts || a.pos-b.pos;
+    if(ord==='gddl')   return (b.gddl||0)-(a.gddl||0) || a.pos-b.pos;
+    if(ord==='edel')   return (b.edel||0)-(a.edel||0) || a.pos-b.pos;
+    if(ord==='pos')    return (a.pos||1e9)-(b.pos||1e9) || (a.pc||1e9)-(b.pc||1e9);
+    return (a.pc||1e9)-(b.pc||1e9) || (a.pos||1e9)-(b.pos||1e9);
+  });
+  return arr;
+}
+
+/* =================== RENDER: panel de nivel (estilo Pointercrate) =================== */
+function panelNivel(n){
+  const hechos = marcaNivel[n.id]||[];
+  const todos = estado.jugadores.length>0 && estado.jugadores.every(j=>hechos.includes(j.id));
+  const thumb = n.video
+    ? `<a class="thumb" href="https://www.youtube.com/watch?v=${n.video}" target="_blank" rel="noopener" title="Ver el vídeo en YouTube">
+         <img class="thumb-img" alt="" loading="lazy" src="https://i.ytimg.com/vi/${n.video}/mqdefault.jpg"
+              onload="this.classList.add('ok')" onerror="this.classList.add('fail')">
+         <span class="thumb-ph"><span class="nm">${esc(n.nombre)}</span><span class="pl">▶ ver vídeo en YouTube</span></span>
+       </a>`
+    : `<a class="thumb novid" ${n.pcId?`href="https://pointercrate.com/demonlist/permalink/${n.pcId}/" target="_blank" rel="noopener"`:''}
+         title="${n.pcId?'Ver la ficha en Pointercrate':'Este nivel no tiene ficha en Pointercrate'}">
+         <span class="thumb-ph"><span class="nm">${esc(n.nombre)}</span><span class="pl">${n.pcId?'sin vídeo · ficha en Pointercrate':'solo en la AREDL · sin ficha en Pointercrate'}</span></span>
+       </a>`;
+  const titulo = n.pc>0
+    ? `#${n.pc} – ${esc(n.nombre)}`
+    : `${esc(n.nombre)} <span class="small dim">(AREDL #${n.pos})</span>`;
+  const byline = (n.verifier||n.publisher)
+    ? `<h3 class="ta-left">${n.verifier?`verified by <b>${esc(n.verifier)}</b>`:''}${n.verifier&&n.publisher?' · ':''}${n.publisher?`published by <b>${esc(n.publisher)}</b>`:''}</h3>`
+    : `<h3 class="ta-left dim" style="font-weight:400">sin ficha en Pointercrate (nivel de AREDL)</h3>`;
+  const ptsline = `${n.pos?`AREDL #${n.pos} — `:''}${n.pts?`${fmt(n.pts)} puntos (100%)`:'0 puntos (Legacy)'}` +
+    (n.req>0 && n.req<100 ? ` · récord parcial en PC desde el ${n.req}%`
+      : (n.pc>0 && n.req>=100 ? ' · en PC solo cuenta el 100%' : '')) +
+    (n.gddl?` · GDDL ${n.gddl}`:'') + (n.edel>=0?` · disfrute ${n.edel}`:'');
+  const tags = n.tags.slice(0,5).map(t=>`<span class="tag">${esc(t)}</span>`).join('');
+  return `<section class="panel fade flex lvl${hechos.length?' marked':''}${todos?' allcked':''}" data-n="${esc(n.id)}">
+    ${thumb}
+    <div class="flex demon-info">
+      <div class="demon-byline">
+        <h2 class="ta-left">${n.pcId?`<a href="https://pointercrate.com/demonlist/permalink/${n.pcId}/" target="_blank" rel="noopener" title="Ver en Pointercrate">${titulo}</a>`:titulo}</h2>
+        ${byline}
+        <div class="ptsline ta-left">${ptsline}</div>
+        <div class="tags ta-left">${n.pc?`<span class="tag pc">PC #${n.pc}</span>`:''}${!n.esMain&&!n.soloPc?'<span class="tag lg">LEGACY</span>':''}${n.soloPc?'<span class="tag">solo AREDL</span>':''}${n.dosJug?'<span class="tag p2">2P</span>':''}${tags}</div>
+        <div class="markers ta-left">
+          <span class="lbl">¿Quién lo ha pasado?</span>
+          ${estado.jugadores.map(j=>{
+            const on = hechos.includes(j.id);
+            return `<button class="pbtn${on?' on':''}" data-lvl="${esc(n.id)}" data-j="${j.id}" title="${esc(j.nombre)}"
+              style="${on?`background:${j.color};`:''}">${esc(corte(j.nombre))}</button>`;
+          }).join('') || '<span class="hint">añade jugadores en la pestaña «Jugadores»</span>'}
+          ${hechos.length?`<span class="who">${hechos.map(id=>esc((jugador(id)||{}).nombre||'?')).join(', ')}</span>`:''}
+        </div>
+      </div>
+    </div>
+  </section>`;
+}
+function pintarNiveles(){
+  const arr = listaFiltrada();
+  const cargados = estado.ui.cargados||50;
+  const trozo = arr.slice(0, cargados);
+  document.getElementById('contador').innerHTML =
+    `Mostrando <b>${fmt(trozo.length)}</b> de <b>${fmt(arr.length)}</b> niveles · ` +
+    `marcados por el grupo: <b>${fmt(niveles.filter(n=>(marcaNivel[n.id]||[]).length).length)}</b> · ` +
+    `listas: ${estado.ui.lista==='pc'?'Pointercrate (todas las posiciones)':estado.ui.lista==='aredl'?'AREDL completa':'filtro especial'}`;
+  document.getElementById('nivelesBox').innerHTML = trozo.map(panelNivel).join('') ||
+    '<section class="panel fade"><p>Ningún nivel coincide con los filtros 🤷</p></section>';
+  document.getElementById('nivelesBox').querySelectorAll('.pbtn').forEach(b=>{
+    b.onclick = ()=>marcar(b.getAttribute('data-lvl'), b.getAttribute('data-j'));
+  });
+  const vm = document.getElementById('vermas');
+  if(trozo.length < arr.length){
+    vm.innerHTML = `<button class="button pc" id="btnVerMas">Ver más niveles (${fmt(arr.length-trozo.length)} restantes)</button>
+      <div style="margin-top:8px"><a id="btnVerTodos" class="small">mostrar los ${fmt(arr.length)} de golpe</a></div>`;
+    document.getElementById('btnVerMas').onclick = ()=>{ estado.ui.cargados = cargados+100; guardar(); pintarNiveles(); };
+    document.getElementById('btnVerTodos').onclick = ()=>{ estado.ui.cargados = arr.length; guardar(); pintarNiveles(); };
+  } else vm.innerHTML = `<div class="hint">${arr.length? 'Eso es todo 🎉':'—'}</div>`;
+}
+
+/* =================== RENDER: marcador / ranking =================== */
+function pintarMarcador(){
+  const rk = ranking(), lider = rk[0];
+  document.getElementById('liderChip').innerHTML = lider && lider.puntos>0
+    ? `🥇 ${esc(lider.j.nombre)} · ${fmt(lider.puntos)} pts` : 'sin marcas todavía';
+  document.getElementById('marcadorJugadores').innerHTML = rk.map((r,i)=>`
+    <div class="jug${i===0&&r.puntos>0?' lead':''}" data-det="${r.j.id}" title="Ver detalle de ${esc(r.j.nombre)}">
+      <div class="nm" style="color:${r.j.color}" data-ren="${r.j.id}">${['🥇','🥈','🥉'][i]||(i+1)+'º'} ${esc(r.j.nombre)}</div>
+      <div class="pz">${fmt(r.puntos)} pts</div>
+      <div class="sub">${fmt(r.puntuados)} niveles</div>
+    </div>`).join('');
+  document.getElementById('marcadorJugadores').querySelectorAll('[data-det]').forEach(el=>{
+    el.onclick = e=>{ const id = e.target.getAttribute('data-ren'); if(id) renombrar(id); else detalleJugador(el.getAttribute('data-det')); };
+  });
+  const conPts = niveles.filter(n=>n.pts>0).length;
+  document.getElementById('resumenLista').innerHTML =
+    `Récord del grupo: <b>${(()=>{const h=niveles.filter(n=>(marcaNivel[n.id]||[]).length&&n.pos>0);
+      const r=h.reduce((a,n)=>a===null||n.pos<a.pos?n:a,null); return r?`#${r.pos} ${esc(r.nombre)}`:'—';})()}</b>` +
+    ` · ${fmt(niveles.length)} niveles en la lista (${fmt(conPts)} con puntos) · datos del ${DATOS.generado}`;
+}
+function pintarRanking(){
+  const rk = ranking(), max = Math.max(1, ...rk.map(r=>r.puntos));
+  document.getElementById('podio').innerHTML = rk.slice(0,3).map((r,i)=>`
+    <div class="pod${i===0&&r.puntos>0?' lead':''}">
+      <div style="font-size:1.9em">${['🥇','🥈','🥉'][i]}</div>
+      <div class="nm" style="color:${r.j.color}">${esc(r.j.nombre)}</div>
+      <div class="pz">${fmt(r.puntos)}</div>
+      <div class="small dim">${fmt(r.puntuados)} niveles con puntos · ${fmt(r.total)} en total</div>
+      <div class="small" style="margin-top:6px">${r.masDificil?`Récord: <b>#${r.masDificil.pos} ${esc(r.masDificil.nombre)}</b>`:'sin niveles marcados'}</div>
+    </div>`).join('');
+  document.getElementById('tablaRanking').innerHTML = `
+    <tr><th>#</th><th>Jugador</th><th>Puntos AREDL</th><th>Peso</th><th>Niveles</th><th>Más difícil</th><th>Media</th><th>Diferencia</th><th></th></tr>
+    ${rk.map((r,i)=>`<tr>
+      <td class="rk ${i===0?'r1':i===1?'r2':i===2?'r3':''}">${i+1}º</td>
+      <td><b style="color:${r.j.color}">${esc(r.j.nombre)}</b></td>
+      <td><b>${fmt(r.puntos)}</b></td>
+      <td><div class="bar"><i style="width:${(r.puntos/max)*100}%"></i></div></td>
+      <td>${fmt(r.puntuados)} / ${fmt(niveles.filter(n=>n.pts>0).length)}</td>
+      <td>${r.masDificil?`#${r.masDificil.pos} ${esc(r.masDificil.nombre)}`:'<span class="dim">—</span>'}</td>
+      <td>${r.media?'#'+r.media.toFixed(0):'<span class="dim">—</span>'}</td>
+      <td>${i===0?(r.puntos?'<b>líder</b>':'<span class="dim">—</span>'):`<span style="color:#c2185b">−${fmt(rk[0].puntos-r.puntos)}</span>`}</td>
+      <td><button class="button unob sm" data-det2="${r.j.id}">Detalle</button></td></tr>`).join('')}`;
+  document.getElementById('tablaRanking').querySelectorAll('[data-det2]').forEach(b=>b.onclick=()=>detalleJugador(b.getAttribute('data-det2')));
+
+  const hechos = niveles.filter(n=>(marcaNivel[n.id]||[]).length), enComun = hechos.filter(n=>(marcaNivel[n.id]||[]).length>1);
+  const rec = hechos.filter(n=>n.pos>0).reduce((a,n)=>a===null||n.pos<a.pos?n:a,null);
+  const totalGrupo = rk.reduce((s,r)=>s+r.puntos,0), totalLista = niveles.reduce((s,n)=>s+n.pts,0);
+  document.getElementById('statsGrupo').innerHTML = `
+    <div style="min-width:170px"><div class="hint">RÉCORD DEL GRUPO</div><div class="kpi" style="font-size:1.15em">${rec?`#${rec.pos} ${esc(rec.nombre)}`:'—'}</div></div>
+    <div style="min-width:150px"><div class="hint">NIVELES PASADOS</div><div class="kpi">${fmt(hechos.length)}</div><div class="small dim">de ${fmt(niveles.length)}</div></div>
+    <div style="min-width:150px"><div class="hint">EN COMÚN (2+ jueg.)</div><div class="kpi">${fmt(enComun.length)}</div></div>
+    <div style="min-width:170px"><div class="hint">PUNTOS SUMADOS</div><div class="kpi">${fmt(totalGrupo)}</div><div class="small dim">${(totalGrupo/totalLista*100).toFixed(1)}% de la lista</div></div>`;
+  pintarPiques();
+}
+function pintarPiques(){
+  const box = document.getElementById('piques');
+  if(estado.jugadores.length<2){ box.innerHTML='<p class="hint">Añade al menos 2 jugadores para ver los piques 😈</p>'; return; }
+  box.innerHTML = estado.jugadores.map(j=>{
+    const otros = estado.jugadores.filter(o=>o.id!==j.id);
+    const unicos = (porJugador[j.id]||[]).filter(n=>n.pos>0 && (marcaNivel[n.id]||[]).length===1);
+    const uTop = unicos.reduce((a,n)=>a===null||n.pos<a.pos?n:a,null);
+    const verg = niveles.filter(n=>n.pos>0 && !(marcaNivel[n.id]||[]).includes(j.id) && otros.every(o=>(marcaNivel[n.id]||[]).includes(o.id)));
+    const vTop = verg.reduce((a,n)=>a===null||n.pos<a.pos?n:a,null);
+    return `<div class="panel fade" style="flex:1 1 240px;max-width:320px;margin:0;text-align:left;padding:14px">
+      <div style="font-weight:700;color:${j.color}">${esc(j.nombre)}</div>
+      <div class="small" style="margin-top:6px">🔥 <b>Nadie más tiene:</b> ${uTop?`#${uTop.pos} ${esc(uTop.nombre)}`:'<span class="dim">—</span>'}</div>
+      <div class="small" style="margin-top:4px">😳 <b>Se le resiste:</b> ${vTop?`#${vTop.pos} ${esc(vTop.nombre)}`:'<span class="dim">—</span>'}</div>
+    </div>`;
+  }).join('');
+}
+
+/* =================== MARCAR =================== */
+function marcar(nivelId, jugId){
+  const n = idxNivel.get(nivelId); if(!n) return;
+  const arr = estado.marcas[nivelId]||[];
+  const i = arr.indexOf(jugId);
+  if(i>=0) arr.splice(i,1); else arr.push(jugId);
+  if(arr.length) estado.marcas[nivelId]=arr; else delete estado.marcas[nivelId];
+  guardar(); reindexar(); pintarTodo();
+  const j = jugador(jugId);
+  toast(i>=0 ? `Desmarcado: ${n.nombre} (${j.nombre})` : `${j.nombre} ha pasado ${n.nombre}${n.pts?' · +'+fmt(n.pts)+' pts':''} 🎉`);
+}
+
+/* =================== DETALLE / JUGADORES =================== */
+function detalleJugador(id){
+  const j = jugador(id); if(!j) return;
+  const s = stats(j), suyos = (porJugador[id]||[]).slice().sort((a,b)=>(a.pos||1e9)-(b.pos||1e9));
+  abrirModal(`<h2>${esc(j.nombre)} <span class="small dim">· ${fmt(s.puntos)} pts · ${fmt(s.total)} niveles</span></h2>
+    <div class="list"><table><tr><th>AREDL</th><th>Nivel</th><th>Puntos</th><th></th></tr>
+    ${suyos.map(n=>`<tr><td>${n.pos?'#'+n.pos:'—'}</td><td>${esc(n.nombre)} ${n.pc?`<span class="tag pc">PC #${n.pc}</span>`:''}</td>
+      <td><b>${fmt(n.pts)}</b></td><td><button class="button unob sm" data-un="${esc(n.id)}">quitar</button></td></tr>`).join('')
+      ||'<tr><td colspan="4" class="hint" style="text-align:center;padding:14px">Todavía no ha pasado ningún nivel 😢</td></tr>'}</table></div>
+    <div class="row" style="margin-top:14px;justify-content:center"><button class="button pc" id="cerrarDet">Cerrar</button></div>`);
+  document.getElementById('cerrarDet').onclick = cerrarModal;
+  document.querySelectorAll('[data-un]').forEach(b=>b.onclick=()=>{ marcar(b.getAttribute('data-un'), id); detalleJugador(id); });
+}
+function pintarJugadores(){
+  const cont = document.getElementById('listaJugadores');
+  cont.innerHTML = estado.jugadores.map(j=>{
+    const s = stats(j);
+    return `<div class="panel fade" style="margin:0;min-width:190px;padding:12px">
+      <div style="font-weight:800;color:${j.color};cursor:pointer" data-ren2="${j.id}" title="Clic para renombrar">${esc(j.nombre)}</div>
+      <div class="small dim">${fmt(s.puntos)} pts · ${fmt(s.puntuados)} niveles</div>
+      <div style="margin-top:8px"><button class="button unob sm" data-del="${j.id}">Eliminar</button></div>
+    </div>`;}).join('');
+  cont.querySelectorAll('[data-ren2]').forEach(el=>el.onclick=()=>renombrar(el.getAttribute('data-ren2')));
+  cont.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
+    const j = jugador(b.getAttribute('data-del'));
+    confirmar('Eliminar jugador', `¿Seguro que quieres eliminar a <b>${esc(j.nombre)}</b>? Se borrarán sus niveles marcados.`, ()=>{
+      estado.jugadores = estado.jugadores.filter(x=>x.id!==j.id);
+      Object.keys(estado.marcas).forEach(k=>{
+        estado.marcas[k] = estado.marcas[k].filter(id=>id!==j.id);
+        if(!estado.marcas[k].length) delete estado.marcas[k];
+      });
+      guardar(); reindexar(); pintarTodo(); toast('Jugador eliminado');
+    });
+  });
+}
+function renombrar(id){
+  const j = jugador(id); if(!j) return;
+  pedirTexto('Renombrar jugador', j.nombre, v=>{ j.nombre = v.slice(0,18); guardar(); pintarTodo(); });
+}
+
+/* =================== MODALES =================== */
+function abrirModal(html){ document.getElementById('modalBox').innerHTML = html; document.getElementById('modal').classList.add('on'); }
+function cerrarModal(){ document.getElementById('modal').classList.remove('on'); }
+function pedirTexto(titulo, valor, cb){
+  abrirModal(`<h2>${esc(titulo)}</h2><input id="ptInput" style="width:100%;margin-top:8px" maxlength="18" value="${esc(valor||'')}">
+    <div class="row" style="margin-top:14px;justify-content:center"><button class="button pc" id="ptOk">Guardar</button>
+    <button class="button unob" id="ptNo">Cancelar</button></div>`);
+  const inp = document.getElementById('ptInput'); inp.focus(); inp.select();
+  const ok = ()=>{ const v = inp.value.trim(); if(!v) return toast('Escribe un nombre'); cerrarModal(); cb(v); };
+  document.getElementById('ptOk').onclick = ok;
+  document.getElementById('ptNo').onclick = cerrarModal;
+  inp.addEventListener('keydown', e=>{ if(e.key==='Enter') ok(); });
+}
+function confirmar(titulo, texto, cb){
+  abrirModal(`<h2>${esc(titulo)}</h2><p class="hint" style="font-size:.95em">${texto}</p>
+    <div class="row" style="margin-top:16px;justify-content:center"><button class="button danger" id="cfOk">Sí, adelante</button>
+    <button class="button unob" id="cfNo">Cancelar</button></div>`);
+  document.getElementById('cfOk').onclick = ()=>{ cerrarModal(); cb(); };
+  document.getElementById('cfNo').onclick = cerrarModal;
+}
+let tToast;
+function toast(msg){
+  const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(tToast); tToast = setTimeout(()=>t.classList.remove('on'), 2600);
+}
+
+/* =================== EXPORTAR / IMPORTAR / COPIAR =================== */
+function textoRanking(){
+  const rk = ranking();
+  return `🏆 CLASIFICACIÓN GD DEL GRUPO — ${DATOS.generado}\n(réplica Demonlist Pointercrate · puntos AREDL)\n\n` +
+    rk.map((r,i)=>`${['🥇','🥈','🥉'][i]||(i+1)+'.'} ${r.j.nombre} — ${fmt(r.puntos)} pts (${r.puntuados} niveles${r.masDificil?`, récord: #${r.masDificil.pos} ${r.masDificil.nombre}`:''})`).join('\n') +
+    `\n\n🏅 Récord del grupo: ${(()=>{const h=niveles.filter(n=>(marcaNivel[n.id]||[]).length&&n.pos>0);const r=h.reduce((a,n)=>a===null||n.pos<a.pos?n:a,null);return r?`#${r.pos} ${r.nombre}`:'—';})()}`;
+}
+function copiar(txt){
+  const ta = document.createElement('textarea'); ta.value = txt; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); toast('Copiado ✅'); }catch(e){ toast('Copia el texto a mano'); }
+  document.body.removeChild(ta);
+}
+function exportar(){
+  const data = JSON.stringify({app:'gd-ranking',v:2,jugadores:estado.jugadores,marcas:estado.marcas});
+  abrirModal(`<h2>Exportar progreso</h2><p class="hint">Copia este texto y pásaselo al grupo.</p>
+    <textarea id="expTxt" style="width:100%;height:210px">${esc(data)}</textarea>
+    <div class="row" style="margin-top:12px;justify-content:center"><button class="button pc" id="cpExp">Copiar</button>
+    <button class="button unob" id="expNo">Cerrar</button></div>`);
+  document.getElementById('cpExp').onclick = ()=>copiar(document.getElementById('expTxt').value);
+  document.getElementById('expNo').onclick = cerrarModal;
+}
+function importar(){
+  abrirModal(`<h2>Importar progreso</h2><p class="hint">Pega el texto exportado por otro jugador.</p>
+    <textarea id="impTxt" style="width:100%;height:190px" placeholder='{"app":"gd-ranking",...}'></textarea>
+    <div class="row" style="margin-top:12px;justify-content:center">
+      <button class="button pc" id="impReemplazar">Reemplazar todo</button>
+      <button class="button unob" id="impFusionar">Fusionar marcas</button>
+      <button class="button unob" id="impNo">Cancelar</button></div>`);
+  const parse = ()=>{ try{ return JSON.parse(document.getElementById('impTxt').value.trim()); }catch(e){ toast('Ese texto no es válido ❌'); return null; } };
+  document.getElementById('impNo').onclick = cerrarModal;
+  document.getElementById('impReemplazar').onclick = ()=>{ const d=parse(); if(!d||!d.jugadores) return;
+    estado.jugadores=d.jugadores; estado.marcas=d.marcas||{}; guardar(); reindexar(); pintarTodo(); cerrarModal(); toast('Progreso importado ✅'); };
+  document.getElementById('impFusionar').onclick = ()=>{ const d=parse(); if(!d||!d.jugadores) return;
+    d.jugadores.forEach(nj=>{ const ex = jugador(nj.id)||estado.jugadores.find(x=>norm(x.nombre)===norm(nj.nombre));
+      if(!ex) estado.jugadores.push(nj);
+      const destino = ex?ex.id:nj.id;
+      Object.entries(d.marcas||{}).forEach(([lid,ids])=>{ if(!ids.includes(nj.id)) return;
+        const a = estado.marcas[lid]||[]; if(!a.includes(destino)) a.push(destino); estado.marcas[lid]=a; }); });
+    guardar(); reindexar(); pintarTodo(); cerrarModal(); toast('Progreso fusionado 🤝'); };
+}
+
+/* =================== ACTUALIZAR DESDE APIS =================== */
+async function actualizar(){
+  const est = document.getElementById('estadoAct');
+  try{
+    est.textContent = '⏳ Descargando AREDL…';
+    const a = await (await fetch('https://api.aredl.net/v2/api/aredl/levels')).json();
+    est.textContent = '⏳ Descargando Pointercrate…';
+    let pc=[], after=0;
+    for(let i=0;i<40;i++){
+      const d = await (await fetch(`https://pointercrate.com/api/v2/demons/listed/?limit=100&after=${after}`)).json();
+      if(!Array.isArray(d)||!d.length) break;
+      pc = pc.concat(d);
+      if(d.length<100) break;
+      after = d[d.length-1].position+1;
+      await new Promise(r=>setTimeout(r,350));
+    }
+    const byLid={}; pc.forEach(d=>{ if(d.level_id) byLid[d.level_id]=d; });
+    const vid = u => { const m=/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/.exec(u||''); return m?m[1]:''; };
+    const arr=[];
+    a.forEach(l=>{ const p=byLid[l.level_id]||{};
+      arr.push([l.id, l.name, l.position, l.points, l.status==='MainList'?1:0, l.two_player?1:0, p.position||0, p.requirement||0,
+        l.gddl_tier?Math.round(l.gddl_tier):0, l.edel_enjoyment!=null?Math.round(l.edel_enjoyment):-1, l.tags||[], 0, l.level_id,
+        vid(p.video), (p.verifier||{}).name||'', (p.publisher||{}).name||'', p.id||0]); });
+    const lids = new Set(a.map(l=>l.level_id));
+    pc.filter(d=>!lids.has(d.level_id)).forEach(d=>arr.push(['pc-'+d.level_id, d.name,0,0,0,0,d.position,d.requirement||0,0,-1,[],1,d.level_id,
+      vid(d.video), (d.verifier||{}).name||'', (d.publisher||{}).name||'', d.id||0]));
+    DATOS.niveles = arr; DATOS.generado = new Date().toISOString().slice(0,10);
+    construirNiveles(arr); reindexar(); pintarTodo();
+    est.innerHTML = `✅ Actualizado (${fmt(niveles.length)} niveles) · ${DATOS.generado}`;
+    toast('Datos actualizados desde las APIs ✅');
+  }catch(e){
+    est.textContent = '⚠️ No se pudo descargar (sin internet o API bloqueada). Se mantienen los datos guardados.';
+  }
+}
+
+/* =================== NAV / INIT =================== */
+function irA(vista){
+  estado.ui.vista = vista; guardar();
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on', v.id==='v-'+vista));
+  document.querySelectorAll('header nav .nav-item[data-view]').forEach(n=>n.classList.toggle('on', n.getAttribute('data-view')===vista));
+  try{ window.scrollTo({top:0,behavior:'smooth'}); }catch(e){}
+}
+function pintarTodo(){ pintarNiveles(); pintarMarcador(); pintarRanking(); pintarJugadores(); }
+function lsDisponible(){ try{ localStorage.setItem('__t','1'); localStorage.removeItem('__t'); return true; }catch(e){ return false; } }
+function init(){
+  construirNiveles(DATOS.niveles); reindexar();
+  if(!lsDisponible()){
+    const av = document.getElementById('avisoGuardado');
+    av.style.display = 'block';
+    av.innerHTML = '⚠️ <b>Este navegador no permite guardar datos aquí</b> (pasa en las vistas previas integradas). ' +
+      'Puedes usar la página igual, pero para no perder el progreso pulsa <b>📋 Copiar ranking</b> y guárdalo, ' +
+      'o abre el archivo directamente en tu navegador (Chrome, Edge, Firefox…) donde sí se guarda solo.';
+  }
+  const bmf = document.getElementById('btnMasFiltros');
+  if(bmf) bmf.onclick = ()=>{ const f = document.getElementById('filtrosAvz'); f.classList.toggle('open');
+    bmf.textContent = f.classList.contains('open') ? '⚙️ Ocultar filtros' : '⚙️ Filtros'; };
+  const u = estado.ui;
+  document.getElementById('fechaDatos').textContent = DATOS.generado;
+  document.getElementById('fechaDatos2').textContent = DATOS.generado;
+  document.getElementById('fechaFooter').textContent = 'datos del ' + DATOS.generado;
+  const pun = niveles.filter(n=>n.pts>0);
+  document.getElementById('rTop').textContent = fmt(pun[0]?pun[0].pts:0)+' pts';
+  document.getElementById('rMin').textContent = fmt(pun[pun.length-1]?pun[pun.length-1].pts:0)+' pts';
+  document.getElementById('rTot').textContent = fmt(niveles.reduce((s,n)=>s+n.pts,0));
+  document.getElementById('rPun').textContent = fmt(pun.length);
+
+  document.getElementById('q').value = u.q;
+  document.getElementById('orden').value = u.orden;
+  document.getElementById('fVista').value = u.fVista;
+  document.getElementById('fTag').value = u.fTag;
+  document.getElementById('fJugador').innerHTML = '<option value="">—</option>' + estado.jugadores.map(j=>`<option value="${j.id}">${esc(j.nombre)}</option>`).join('');
+  document.getElementById('fJugador').value = u.fJugador||'';
+  document.getElementById('chipsPend').innerHTML =
+    `<button class="chip${u.pend===''?' on':''}" data-pend="">Todos</button>
+     <button class="chip${u.pend==='pendientes'?' on':''}" data-pend="pendientes">⏳ Le falta a…</button>
+     <button class="chip${u.pend==='pasados'?' on':''}" data-pend="pasados">✅ Lo ha pasado…</button>`;
+  document.getElementById('chipsPend').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
+    estado.ui.pend = c.getAttribute('data-pend'); estado.ui.cargados = 50;
+    document.querySelectorAll('#chipsPend .chip').forEach(x=>x.classList.toggle('on', x===c));
+    guardar(); pintarNiveles();
+  });
+  document.querySelectorAll('#lists .button').forEach(b=>b.classList.toggle('on', b.getAttribute('data-lista')===u.lista));
+  document.querySelectorAll('#lists .button').forEach(b=>{
+    b.classList.toggle('off', b.getAttribute('data-lista')!==u.lista);
+    b.onclick = ()=>{ estado.ui.lista = b.getAttribute('data-lista'); estado.ui.cargados = 50;
+      document.querySelectorAll('#lists .button').forEach(x=>{ x.classList.toggle('on', x===b); x.classList.toggle('off', x!==b); });
+      guardar(); pintarNiveles(); };
+  });
+
+  document.getElementById('q').oninput = e=>{ estado.ui.q = e.target.value; estado.ui.cargados = 50; guardar(); pintarNiveles(); };
+  document.getElementById('orden').onchange = e=>{ estado.ui.orden = e.target.value; guardar(); pintarNiveles(); };
+  document.getElementById('fVista').onchange = e=>{ estado.ui.fVista = e.target.value; estado.ui.cargados = 50; guardar(); pintarNiveles(); };
+  document.getElementById('fTag').onchange = e=>{ estado.ui.fTag = e.target.value; estado.ui.cargados = 50; guardar(); pintarNiveles(); };
+  document.getElementById('fJugador').onchange = e=>{ estado.ui.fJugador = e.target.value; guardar(); pintarNiveles(); };
+  document.getElementById('btnLimpiar').onclick = ()=>{
+    Object.assign(estado.ui,{q:'',fVista:'todos',fJugador:'',fTag:'',pend:'',orden:'pc',cargados:50});
+    document.getElementById('q').value=''; document.getElementById('fVista').value='todos';
+    document.getElementById('fTag').value=''; document.getElementById('fJugador').value='';
+    document.querySelectorAll('#chipsPend .chip').forEach(x=>x.classList.toggle('on', x.getAttribute('data-pend')===''));
+    guardar(); pintarNiveles();
+  };
+  document.getElementById('btnAddJugador').onclick = ()=>{
+    const inp = document.getElementById('nuevoJugador'), nombre = (inp.value||'').trim();
+    if(!nombre) return toast('Escribe un nombre primero');
+    estado.jugadores.push({id:'p'+Date.now().toString(36), nombre:nombre.slice(0,18), color:PALETA[estado.jugadores.length%PALETA.length]});
+    inp.value=''; guardar(); reindexar(); pintarTodo();
+    document.getElementById('fJugador').innerHTML = '<option value="">—</option>' + estado.jugadores.map(j=>`<option value="${j.id}">${esc(j.nombre)}</option>`).join('');
+    toast(nombre+' añadido 🎮');
+  };
+  document.getElementById('nuevoJugador').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('btnAddJugador').click(); });
+  const reset = ()=>confirmar('Reiniciar todo','Se borrarán los jugadores y <b>todos</b> los niveles marcados. Esto no se puede deshacer.',()=>{
+    estado = estadoInicial(); guardar(); reindexar();
+    document.getElementById('fJugador').innerHTML = '<option value="">—</option>' + estado.jugadores.map(j=>`<option value="${j.id}">${esc(j.nombre)}</option>`).join('');
+    pintarTodo(); irA('demonlist'); toast('Todo reiniciado ♻️'); });
+  document.getElementById('btnReset').onclick = reset;
+  document.getElementById('btnReset2').onclick = reset;
+  document.getElementById('btnExportar').onclick = exportar;
+  document.getElementById('btnImportar').onclick = importar;
+  document.getElementById('btnActualizar').onclick = actualizar;
+  document.getElementById('btnCopiarRanking').onclick = ()=>copiar(textoRanking());
+  document.getElementById('btnCopiarRanking2').onclick = ()=>copiar(textoRanking());
+  document.querySelectorAll('header nav .nav-item[data-view], header nav .nav-icon').forEach(n=>n.onclick=()=>irA(n.getAttribute('data-view')));
+  document.getElementById('modal').onclick = e=>{ if(e.target.id==='modal') cerrarModal(); };
+  document.addEventListener('keydown', e=>{
+    if(e.key==='Escape') cerrarModal();
+    if(e.key==='/' && !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)){ e.preventDefault(); irA('demonlist'); document.getElementById('q').focus(); }
+  });
+  pintarTodo(); irA(u.vista||'demonlist');
+}
+init();
+</script>
+</body>
+</html>
