@@ -5,8 +5,10 @@ Web privada para picarnos entre colegas: clonamos la página de la
 verificador, publisher y el % de récord parcial) y le añadimos nuestro marcador, con los
 **puntos oficiales de la AREDL**.
 
-👉 **Se abre con doble clic en `index.html`** (no necesita servidor, ni instalar nada, ni internet para
-funcionar: los datos van incrustados).
+🌐 **Online:** https://a25adataftaf.github.io/GD-demonlist-amigos/
+
+👉 **También se abre con doble clic en `index.html`** (no necesita servidor, ni instalar nada, ni internet
+para funcionar: los datos van incrustados).
 
 ---
 
@@ -50,34 +52,27 @@ puntuado, **10 pts**. En total, **1.159.358 puntos** repartidos entre **1.588 ni
 - En la AREDL un récord cuenta solo con el **100%**; en Pointercrate el top 75 admite parciales
   (la web indica desde qué % — aquí marcamos niveles completados).
 
-## 🚀 Subirlo a tu repositorio (GitHub)
+## 🚀 Publicado
 
-El repo ya está inicializado y con el primer commit hecho. Solo falta engancharlo a tu cuenta:
+Repo: <https://github.com/a25adataftaf/GD-demonlist-amigos> · Web: <https://a25adataftaf.github.io/GD-demonlist-amigos/>
 
-```bash
-# 1) Crea el repositorio vacío en GitHub (sin README ni licencia), por ejemplo: gd-demonlist-grupo
+El remoto `origin` ya está configurado y la web se publica **sola en cada push** a `main`
+(Settings → Pages → Source: GitHub Actions, ya activado).
 
-# 2) Desde esta carpeta:
-git remote add origin https://github.com/TU-USUARIO/gd-demonlist-grupo.git
-git branch -M main
-git push -u origin main
-```
-
-Si usas **GitLab** o **Codeberg**, igual pero con su URL:
+Para subir cambios:
 
 ```bash
-git remote add origin https://gitlab.com/TU-USUARIO/gd-demonlist-grupo.git
-git push -u origin main
+git add -A
+git commit -m "lo que hayas cambiado"
+git push
 ```
 
-### Para que se vea online (GitHub Pages)
+Si algún día quieres publicar desde otro repositorio, basta con cambiar el remoto:
 
-1. En el repo: **Settings → Pages → Source: GitHub Actions**.
-2. Con el `pages.yml` incluido, cada `push` a `main` publica la web en
-   `https://TU-USUARIO.github.io/gd-demonlist-grupo/`.
-
-⚠️ Si quieres Pages gratis, el repo debe ser **público** (o tendrás que usar Pages en un plan de pago).
-Si lo quieres privado, la web se abre perfectamente con doble clic en `index.html`, sin publicar nada.
+```bash
+git remote set-url origin https://github.com/TU-USUARIO/TU-REPO.git
+git push -u origin main
+```
 
 ## 🔄 Actualizar los datos
 
