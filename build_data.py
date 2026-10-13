@@ -85,6 +85,7 @@ def main():
     puntos_total = sum(n[3] for n in niveles)
     dataset = {
         "generado": datetime.date.today().isoformat(),
+        "top_actualizado": datetime.date.today().isoformat(),
         "fuente_aredl": "https://api.aredl.net/v2/api/aredl/levels",
         "fuente_pointercrate": "https://pointercrate.com/api/v2/demons/listed/",
         "total_niveles": len(niveles),

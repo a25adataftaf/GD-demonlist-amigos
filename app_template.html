@@ -152,6 +152,9 @@ label.lbl{font-size:.72em; text-transform:uppercase; letter-spacing:.06em; color
 #lists .button{font-size:.9em; flex-grow:1}
 #lists .button.on{background:var(--color-pc-button-bg-click); color:#fff}
 #lists .button.off{background:#f4f6f9; color:#555; border:1px solid #e3e6ea}
+.list-sync-status{margin:0 10px 10px; padding:8px 12px; text-align:center; line-height:1.4; background:#f6f9fc; border:1px solid #e6edf4; border-radius:4px}
+.list-sync-status.ok{color:#246b3d; background:#f1fbf3; border-color:#d6efdc}
+.list-sync-status.warn{color:#705d17; background:#fffbea; border-color:#f0e6b4}
 /* ===================== Marcador ===================== */
 #marcador{position:sticky; top:70px; z-index:900; margin:26px 10px 6px; padding:12px 16px; text-align:left}
 @media(max-width:767px){ #marcador{position:static; margin:14px 6px 6px} }
@@ -217,6 +220,7 @@ label.lbl{font-size:.72em; text-transform:uppercase; letter-spacing:.06em; color
 
   <!-- ============ DEMONLIST ============ -->
   <section class="view on" id="v-demonlist">
+    <div class="hint list-sync-status" id="estadoListas" role="status" aria-live="polite"></div>
     <nav class="flex wrap" id="lists">
       <button class="button pc on" data-lista="pc">Pointercrate Demonlist</button>
       <button class="button off" data-lista="aredl">AREDL completa</button>
@@ -351,7 +355,7 @@ label.lbl{font-size:.72em; text-transform:uppercase; letter-spacing:.06em; color
       </ul>
       <h3 class="ta-left">ℹ️ De dónde salen los datos</h3>
       <ul style="list-style:disc; padding-left:22px">
-        <li>Posiciones y puntos: <a href="https://api.aredl.net/v2/docs" target="_blank" rel="noopener">API de la AREDL</a> (1.679 niveles).</li>
+        <li>Posiciones y puntos: <a href="https://api.aredl.net/v2/docs" target="_blank" rel="noopener">API de la AREDL</a> (<span id="cantidadAredl"></span> niveles en los datos cargados).</li>
         <li>Miniaturas, verificador, publisher y % requerido: <a href="https://pointercrate.com/api/v2/demons/listed/" target="_blank" rel="noopener">API de Pointercrate</a>.</li>
         <li>Datos descargados el <b id="fechaDatos2"></b>. Las posiciones cambian con cada actualización de las listas:
             las marcas se guardan por ID del nivel, así que no se pierde nada, pero los puntos de cada nivel pueden variar.</li>
@@ -506,7 +510,7 @@ function panelNivel(n){
         <h2 class="ta-left">${n.pcId?`<a href="https://pointercrate.com/demonlist/permalink/${n.pcId}/" target="_blank" rel="noopener" title="Ver en Pointercrate">${titulo}</a>`:titulo}</h2>
         ${byline}
         <div class="ptsline ta-left">${ptsline}</div>
-        <div class="tags ta-left">${n.pc?`<span class="tag pc">PC #${n.pc}</span>`:''}${!n.esMain&&!n.soloPc?'<span class="tag lg">LEGACY</span>':''}${n.soloPc?'<span class="tag">solo AREDL</span>':''}${n.dosJug?'<span class="tag p2">2P</span>':''}${tags}</div>
+        <div class="tags ta-left">${n.pc?`<span class="tag pc">PC #${n.pc}</span>`:''}${!n.esMain&&!n.soloPc?'<span class="tag lg">LEGACY</span>':''}${n.soloPc?'<span class="tag">solo Pointercrate</span>':''}${n.dosJug?'<span class="tag p2">2P</span>':''}${tags}</div>
         <div class="markers ta-left">
           <span class="lbl">¿Quién lo ha pasado?</span>
           ${estado.jugadores.map(j=>{
@@ -733,38 +737,97 @@ function importar(){
     guardar(); reindexar(); pintarTodo(); cerrarModal(); toast('Progreso fusionado 🤝'); };
 }
 
-/* =================== ACTUALIZAR DESDE APIS =================== */
-async function actualizar(){
+/* =================== RESUMEN / ACTUALIZAR DESDE APIS =================== */
+function topPointercrate(){
+  return niveles.filter(n=>n.pc>0).reduce((top,n)=>!top||n.pc<top.pc?n:top,null);
+}
+function estadoSincronizacion(texto, tipo=''){
+  const el = document.getElementById('estadoListas');
+  if(!el) return;
+  el.className = `hint list-sync-status${tipo?' '+tipo:''}`;
+  el.textContent = texto;
+}
+function resumenSnapshot(){
+  const top = topPointercrate();
+  if(!top) return 'Cargando la lista de Geometry Dash…';
+  const fechaTop = DATOS.top_actualizado || DATOS.generado || 'fecha desconocida';
+  const resto = DATOS.generado && DATOS.generado!==fechaTop ? ` · snapshot general del ${DATOS.generado}` : '';
+  return `Pointercrate #1: ${top.nombre} · top verificado el ${fechaTop}${resto}. Buscando la lista más reciente…`;
+}
+function actualizarResumenDatos(){
+  const fecha = DATOS.generado || 'desconocida';
+  const setText = (id, text)=>{ const el=document.getElementById(id); if(el) el.textContent=text; };
+  setText('fechaDatos', fecha);
+  setText('fechaDatos2', fecha);
+  setText('fechaFooter', 'datos del ' + fecha);
+  const pun = niveles.filter(n=>n.pts>0).sort((a,b)=>(a.pos||1e9)-(b.pos||1e9));
+  setText('rTop', fmt(pun[0]?pun[0].pts:0)+' pts');
+  setText('rMin', fmt(pun[pun.length-1]?pun[pun.length-1].pts:0)+' pts');
+  setText('rTot', fmt(niveles.reduce((s,n)=>s+n.pts,0)));
+  setText('rPun', fmt(pun.length));
+  setText('cantidadAredl', fmt(niveles.filter(n=>!n.soloPc).length));
+}
+function fechaHoy(){ return new Date().toISOString().slice(0,10); }
+async function actualizar(silencioso=false){
   const est = document.getElementById('estadoAct');
+  const ponerEstado = texto=>{ if(est) est.textContent=texto; };
+  estadoSincronizacion('Conectando con las listas oficiales…');
   try{
-    est.textContent = '⏳ Descargando AREDL…';
-    const a = await (await fetch('https://api.aredl.net/v2/api/aredl/levels')).json();
-    est.textContent = '⏳ Descargando Pointercrate…';
+    ponerEstado('⏳ Descargando AREDL…');
+    const respAredl = await fetch('https://api.aredl.net/v2/api/aredl/levels', {cache:'no-store'});
+    if(!respAredl.ok) throw new Error(`AREDL respondió ${respAredl.status}`);
+    const a = await respAredl.json();
+    if(!Array.isArray(a)||!a.length) throw new Error('La API de AREDL no devolvió niveles');
+
+    ponerEstado('⏳ Descargando Pointercrate…');
     let pc=[], after=0;
-    for(let i=0;i<40;i++){
-      const d = await (await fetch(`https://pointercrate.com/api/v2/demons/listed/?limit=100&after=${after}`)).json();
-      if(!Array.isArray(d)||!d.length) break;
+    for(let i=0;i<60;i++){
+      const respPc = await fetch(`https://pointercrate.com/api/v2/demons/listed/?limit=100&after=${after}`, {cache:'no-store'});
+      if(!respPc.ok) throw new Error(`Pointercrate respondió ${respPc.status}`);
+      const d = await respPc.json();
+      if(!Array.isArray(d)) throw new Error('La API de Pointercrate devolvió una respuesta no válida');
+      if(!d.length) break;
       pc = pc.concat(d);
       if(d.length<100) break;
-      after = d[d.length-1].position+1;
+      const siguiente = Number(d[d.length-1].position)+1;
+      if(!Number.isFinite(siguiente)||siguiente<=after) throw new Error('La paginación de Pointercrate no avanzó');
+      after = siguiente;
       await new Promise(r=>setTimeout(r,350));
     }
+    if(!pc.length) throw new Error('Pointercrate no devolvió niveles');
+
     const byLid={}; pc.forEach(d=>{ if(d.level_id) byLid[d.level_id]=d; });
     const vid = u => { const m=/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/.exec(u||''); return m?m[1]:''; };
     const arr=[];
-    a.forEach(l=>{ const p=byLid[l.level_id]||{};
+    a.sort((x,y)=>(x.position||0)-(y.position||0)).forEach(l=>{ const p=byLid[l.level_id]||{};
       arr.push([l.id, l.name, l.position, l.points, l.status==='MainList'?1:0, l.two_player?1:0, p.position||0, p.requirement||0,
-        l.gddl_tier?Math.round(l.gddl_tier):0, l.edel_enjoyment!=null?Math.round(l.edel_enjoyment):-1, l.tags||[], 0, l.level_id,
+        l.gddl_tier!=null?Math.round(l.gddl_tier):0, l.edel_enjoyment!=null?Math.round(l.edel_enjoyment):-1, l.tags||[], 0, l.level_id,
         vid(p.video), (p.verifier||{}).name||'', (p.publisher||{}).name||'', p.id||0]); });
-    const lids = new Set(a.map(l=>l.level_id));
-    pc.filter(d=>!lids.has(d.level_id)).forEach(d=>arr.push(['pc-'+d.level_id, d.name,0,0,0,0,d.position,d.requirement||0,0,-1,[],1,d.level_id,
+    const lids = new Set(a.map(l=>String(l.level_id)));
+    pc.filter(d=>!lids.has(String(d.level_id))).forEach(d=>arr.push(['pc-'+d.level_id, d.name,0,0,0,0,d.position,d.requirement||0,0,-1,[],1,d.level_id,
       vid(d.video), (d.verifier||{}).name||'', (d.publisher||{}).name||'', d.id||0]));
-    DATOS.niveles = arr; DATOS.generado = new Date().toISOString().slice(0,10);
-    construirNiveles(arr); reindexar(); pintarTodo();
-    est.innerHTML = `✅ Actualizado (${fmt(niveles.length)} niveles) · ${DATOS.generado}`;
-    toast('Datos actualizados desde las APIs ✅');
+
+    DATOS.niveles = arr;
+    DATOS.generado = fechaHoy();
+    DATOS.top_actualizado = DATOS.generado;
+    DATOS.total_niveles = arr.length;
+    DATOS.con_puntos = arr.filter(n=>n[3]>0).length;
+    DATOS.legacy = arr.filter(n=>n[4]===0&&n[11]===0).length;
+    DATOS.en_pointercrate = arr.filter(n=>n[6]>0).length;
+    DATOS.solo_pointercrate = arr.filter(n=>n[11]===1).length;
+    DATOS.puntos_totales = arr.reduce((s,n)=>s+n[3],0);
+    construirNiveles(arr); reindexar(); pintarTodo(); actualizarResumenDatos();
+    const top = topPointercrate();
+    const topNombre = top?top.nombre:'sin niveles';
+    ponerEstado(`✅ Actualizado (${fmt(niveles.length)} niveles) · ${DATOS.generado}`);
+    estadoSincronizacion(`✅ Listas sincronizadas el ${DATOS.generado} · Pointercrate #1: ${topNombre}.`, 'ok');
+    if(!silencioso) toast('Datos actualizados desde las APIs ✅');
+    return true;
   }catch(e){
-    est.textContent = '⚠️ No se pudo descargar (sin internet o API bloqueada). Se mantienen los datos guardados.';
+    ponerEstado('⚠️ No se pudo descargar (sin internet o API bloqueada). Se mantienen los datos guardados.');
+    const top = topPointercrate();
+    estadoSincronizacion(`⚠️ No se pudo sincronizar. Se mantienen los datos locales · Pointercrate #1 del snapshot: ${top?top.nombre:'—'}.`, 'warn');
+    return false;
   }
 }
 
@@ -790,14 +853,7 @@ function init(){
   if(bmf) bmf.onclick = ()=>{ const f = document.getElementById('filtrosAvz'); f.classList.toggle('open');
     bmf.textContent = f.classList.contains('open') ? '⚙️ Ocultar filtros' : '⚙️ Filtros'; };
   const u = estado.ui;
-  document.getElementById('fechaDatos').textContent = DATOS.generado;
-  document.getElementById('fechaDatos2').textContent = DATOS.generado;
-  document.getElementById('fechaFooter').textContent = 'datos del ' + DATOS.generado;
-  const pun = niveles.filter(n=>n.pts>0);
-  document.getElementById('rTop').textContent = fmt(pun[0]?pun[0].pts:0)+' pts';
-  document.getElementById('rMin').textContent = fmt(pun[pun.length-1]?pun[pun.length-1].pts:0)+' pts';
-  document.getElementById('rTot').textContent = fmt(niveles.reduce((s,n)=>s+n.pts,0));
-  document.getElementById('rPun').textContent = fmt(pun.length);
+  actualizarResumenDatos();
 
   document.getElementById('q').value = u.q;
   document.getElementById('orden').value = u.orden;
@@ -851,7 +907,7 @@ function init(){
   document.getElementById('btnReset2').onclick = reset;
   document.getElementById('btnExportar').onclick = exportar;
   document.getElementById('btnImportar').onclick = importar;
-  document.getElementById('btnActualizar').onclick = actualizar;
+  document.getElementById('btnActualizar').onclick = ()=>actualizar(false);
   document.getElementById('btnCopiarRanking').onclick = ()=>copiar(textoRanking());
   document.getElementById('btnCopiarRanking2').onclick = ()=>copiar(textoRanking());
   document.querySelectorAll('header nav .nav-item[data-view], header nav .nav-icon').forEach(n=>n.onclick=()=>irA(n.getAttribute('data-view')));
@@ -861,6 +917,10 @@ function init(){
     if(e.key==='/' && !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)){ e.preventDefault(); irA('demonlist'); document.getElementById('q').focus(); }
   });
   pintarTodo(); irA(u.vista||'demonlist');
+  estadoSincronizacion(resumenSnapshot());
+  if(typeof navigator!=='undefined' && navigator.onLine){
+    window.setTimeout(()=>actualizar(true), 250);
+  }
 }
 init();
 </script>
